@@ -13,9 +13,7 @@ import {
     SendAndCallInput,
     SingleHopCallMessage
 } from "./interfaces/ITeleporterTokenBridge.sol";
-import {IWrappedNativeToken} from "./interfaces/IWrappedNativeToken.sol";
 import {CallUtils} from "./utils/CallUtils.sol";
-import {SafeWrappedNativeTokenDeposit} from "./utils/SafeWrappedNativeTokenDeposit.sol";
 
 /**
  * THIS IS AN EXAMPLE CONTRACT THAT USES UN-AUDITED CODE.
@@ -32,36 +30,21 @@ import {SafeWrappedNativeTokenDeposit} from "./utils/SafeWrappedNativeTokenDepos
  */
 contract NativeTokenSource is INativeTokenBridge, TeleporterTokenSource {
     /**
-     * @notice The wrapped native token contract that represents the native tokens on this chain.
-     */
-    IWrappedNativeToken public immutable token;
-
-    /**
      * @notice Initializes this source token bridge instance
-     * @dev Teleporter fees are paid by a {IWrappedNativeToken} instance.
+     * @dev Teleporter fees can be paid in ERC20 tokens as configured by token bridge owner
      */
     constructor(
         address teleporterRegistryAddress,
         address teleporterManager,
-        address feeTokenAddress_
-    ) TeleporterTokenSource(teleporterRegistryAddress, teleporterManager, feeTokenAddress_) {
-        token = IWrappedNativeToken(feeTokenAddress_);
-    }
-
-    /**
-     * @notice Receives native tokens transferred to this contract.
-     * @dev This function is called when the token bridge is withdrawing native tokens to
-     * transfer to the recipient. The caller must be the wrapped native token contract.
-     */
-    receive() external payable {
-        require(msg.sender == feeTokenAddress, "NativeTokenSource: invalid receive payable sender");
-    }
+        address[] memory initialFeeOptions,
+        address[] memory initialRelayers
+    ) TeleporterTokenSource(teleporterRegistryAddress, teleporterManager, initialFeeOptions, initialRelayers) {}
 
     /**
      * @dev See {INativeTokenBridge-send}
      */
     function send(SendTokensInput calldata input) external payable {
-        _send(input, msg.value, false);
+        _send(input, msg.sender, msg.value, false);
     }
 
     function sendAndCall(SendAndCallInput calldata input) external payable {
@@ -73,7 +56,8 @@ contract NativeTokenSource is INativeTokenBridge, TeleporterTokenSource {
      * Deposits the native tokens sent to this contract
      */
     function _deposit(uint256 amount) internal virtual override returns (uint256) {
-        return SafeWrappedNativeTokenDeposit.safeDeposit(token, amount);
+        // Noop, since native coins are already in contract
+        return amount;
     }
 
     /**
@@ -83,7 +67,6 @@ contract NativeTokenSource is INativeTokenBridge, TeleporterTokenSource {
      */
     function _withdraw(address recipient, uint256 amount) internal virtual override {
         emit TokensWithdrawn(recipient, amount);
-        token.withdraw(amount);
         payable(recipient).transfer(amount);
     }
 
@@ -99,9 +82,6 @@ contract NativeTokenSource is INativeTokenBridge, TeleporterTokenSource {
         SingleHopCallMessage memory message,
         uint256 amount
     ) internal virtual override {
-        // Withdraw the native token from the wrapped native token contract.
-        token.withdraw(amount);
-
         // Encode the call to {INativeSendAndCallReceiver-receiveTokens}
         bytes memory payload = abi.encodeCall(
             INativeSendAndCallReceiver.receiveTokens,

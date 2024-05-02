@@ -18,7 +18,6 @@ import {TeleporterOwnerUpgradeable} from "@teleporter/upgrades/TeleporterOwnerUp
 // We need IAllowList as an indirect dependency in order to compile.
 // solhint-disable-next-line no-unused-import
 import {IAllowList} from "@avalabs/subnet-evm-contracts@1.2.0/contracts/interfaces/IAllowList.sol";
-import {IWrappedNativeToken} from "./interfaces/IWrappedNativeToken.sol";
 import {
     SendTokensInput,
     SendAndCallInput,
@@ -37,9 +36,10 @@ import {CallUtils} from "./utils/CallUtils.sol";
  */
 
 struct NativeTokenDestinationSettings {
-    string nativeAssetSymbol;
     address teleporterRegistryAddress;
     address teleporterManager;
+    address[] initialFeeOptions;
+    address[] initialRelayers;
     bytes32 sourceBlockchainID;
     address tokenSourceAddress;
     uint256 initialReserveImbalance;
@@ -56,12 +56,10 @@ struct NativeTokenDestinationSettings {
  * It mints and burns native tokens on the destination chain corresponding to locks and unlocks on the source chain.
  */
 contract NativeTokenDestination is
-    ERC20,
     TeleporterOwnerUpgradeable,
     INativeTokenDestination,
     SendReentrancyGuard,
-    TeleporterTokenDestination,
-    IWrappedNativeToken
+    TeleporterTokenDestination
 {
     /**
      * @notice The address where the burned transaction fees are credited.
@@ -137,10 +135,11 @@ contract NativeTokenDestination is
     }
 
     constructor(NativeTokenDestinationSettings memory settings)
-        ERC20(string.concat("Wrapped ", settings.nativeAssetSymbol), settings.nativeAssetSymbol)
         TeleporterTokenDestination(
             settings.teleporterRegistryAddress,
             settings.teleporterManager,
+            settings.initialFeeOptions,
+            settings.initialRelayers,
             settings.sourceBlockchainID,
             settings.tokenSourceAddress,
             settings.decimalsShift,
@@ -160,22 +159,6 @@ contract NativeTokenDestination is
             "NativeTokenDestination: invalid percentage"
         );
         burnedFeesReportingRewardPercentage = settings.burnedFeesReportingRewardPercentage;
-    }
-
-    /**
-     * @dev Receives native token with no calldata provided. The tokens are credited to the sender's
-     * wrapped native token balance.
-     */
-    receive() external payable {
-        deposit();
-    }
-
-    /**
-     * @dev Fallback function for receiving native tokens. The tokens are credited to the sender's
-     * wrapped native token balance.
-     */
-    fallback() external payable {
-        deposit();
     }
 
     /**
@@ -239,37 +222,10 @@ contract NativeTokenDestination is
     }
 
     /**
-     * @dev See {IWrappedNativeToken-withdraw}.
-     *
-     * Note: {IWrappedNativeToken-withdraw} should not be confused with {TeleporterTokenDestination-_withdraw}.
-     * {IWrappedNativeToken-withdraw} is the external method to redeem a wrapped native token (ERC20) balance
-     * for the native token itself. {TeleporterTokenDestination-_withdraw} is the internal method used when
-     * processing bridge transfers.
-     */
-    function withdraw(uint256 amount) external {
-        emit Withdrawal(msg.sender, amount);
-        _burn(msg.sender, amount);
-        payable(msg.sender).transfer(amount);
-    }
-
-    /**
      * @dev See {INativeTokenDestination-isCollateralized}.
      */
     function isCollateralized() external view returns (bool) {
         return _isCollateralized();
-    }
-
-    /**
-     * @dev See {IWrappedNativeToken-deposit}.
-     *
-     * Note: {IWrappedNativeToken-deposit} should not be confused with {TeleporterTokenDestination-_deposit}.
-     * {IWrappedNativeToken-deposit} is the public method for converting native tokens into the wrapped native
-     * token (ERC20) representation. {TeleporterTokenDestination-_deposit} is the internal method used when
-     * processing bridge transfers.
-     */
-    function deposit() public payable {
-        emit Deposit(msg.sender, msg.value);
-        _mint(msg.sender, msg.value);
     }
 
     /**
@@ -291,12 +247,10 @@ contract NativeTokenDestination is
      * @dev See {TeleporterTokenDestination-_deposit}
      *
      * Native tokens to be deposited are sent via the payable {send} and {sendAndCall} functions, and
-     * remained locked in this contract. The internal call to {_mint} here credits the full amount as
-     * the wrapped native asset (ERC20) token by incrementing the ERC20 balance of this contract, such
-     * that it can be used to pay for message fees if needed.
+     * remained locked in this contract.
      */
     function _deposit(uint256 amount) internal virtual override returns (uint256) {
-        _mint(address(this), amount);
+        // Noop, since native coins are already in contract
         return amount;
     }
 
@@ -339,7 +293,6 @@ contract NativeTokenDestination is
      *
      */
     function _burn(uint256 amount) internal virtual override {
-        _burn(address(this), amount);
         payable(BURNED_FOR_BRIDGE_ADDRESS).transfer(amount);
     }
 

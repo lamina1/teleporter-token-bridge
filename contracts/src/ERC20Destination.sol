@@ -42,6 +42,8 @@ contract ERC20Destination is IERC20Bridge, TeleporterTokenDestination, ERC20 {
     constructor(
         address teleporterRegistryAddress,
         address teleporterManager,
+        address[] memory initialFeeOptions,
+        address[] memory initialRelayers,
         bytes32 sourceBlockchainID_,
         address tokenSourceAddress_,
         string memory tokenName,
@@ -51,6 +53,8 @@ contract ERC20Destination is IERC20Bridge, TeleporterTokenDestination, ERC20 {
         TeleporterTokenDestination(
             teleporterRegistryAddress,
             teleporterManager,
+            initialFeeOptions,
+            initialRelayers,
             sourceBlockchainID_,
             tokenSourceAddress_,
             0,

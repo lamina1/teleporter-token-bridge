@@ -46,8 +46,10 @@ contract ERC20Source is IERC20Bridge, TeleporterTokenSource {
     constructor(
         address teleporterRegistryAddress,
         address teleporterManager,
-        address tokenAddress
-    ) TeleporterTokenSource(teleporterRegistryAddress, teleporterManager, tokenAddress) {
+        address tokenAddress,
+        address[] memory initialFeeOptions,
+        address[] memory initialRelayers
+    ) TeleporterTokenSource(teleporterRegistryAddress, teleporterManager, initialFeeOptions, initialRelayers) {
         token = IERC20(tokenAddress);
     }
 
@@ -55,7 +57,7 @@ contract ERC20Source is IERC20Bridge, TeleporterTokenSource {
      * @dev See {IERC20Bridge-send}
      */
     function send(SendTokensInput calldata input, uint256 amount) external {
-        _send(input, amount, false);
+        _send(input, msg.sender, amount, false);
     }
 
     /**

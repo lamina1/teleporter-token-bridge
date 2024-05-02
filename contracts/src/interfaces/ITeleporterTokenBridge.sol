@@ -17,7 +17,9 @@ import {ITeleporterReceiver} from "@teleporter/ITeleporterReceiver.sol";
  * @param destinationBlockchainID blockchainID of the destination
  * @param destinationBridgeAddress address of the destination token bridge instance
  * @param recipient address of the recipient on the destination chain
+ * @param primaryFeeAddress address of the ERC20 token used for primary fee
  * @param primaryFee amount of tokens to pay for Teleporter fee on the source chain
+ * @param secondaryFeeAddress address of the ERC20 token used for secondary fee
  * @param secondaryFee amount of tokens to pay for Teleporter fee if a multi-hop is needed
  * @param requiredGasLimit gas limit requirement for sending to a token bridge.
  * This is required because the gas requirement varies based on the token bridge instance
@@ -27,7 +29,9 @@ struct SendTokensInput {
     bytes32 destinationBlockchainID;
     address destinationBridgeAddress;
     address recipient;
+    address primaryFeeAddress;
     uint256 primaryFee;
+    address secondaryFeeAddress;
     uint256 secondaryFee;
     uint256 requiredGasLimit;
 }
@@ -43,7 +47,9 @@ struct SendTokensInput {
  * @param recipientGasLimit the amount of gas that will provided to the recipient contract on the destination chain,
  *                          which must be less than the requiredGasLimit of the message as a whole.
  * @param fallbackRecipient address where the bridged tokens are sent if the call to the recipient contract fails.
+ * @param primaryFeeAddress address of the ERC20 token used for primary fee
  * @param primaryFee amount of tokens to pay for Teleporter fee on the source chain
+ * @param secondaryFeeAddress address of the ERC20 token used for secondary fee
  * @param secondaryFee amount of tokens to pay for Teleporter fee if a multi-hop is needed
  */
 struct SendAndCallInput {
@@ -54,7 +60,9 @@ struct SendAndCallInput {
     uint256 requiredGasLimit;
     uint256 recipientGasLimit;
     address fallbackRecipient;
+    address primaryFeeAddress;
     uint256 primaryFee;
+    address secondaryFeeAddress;
     uint256 secondaryFee;
 }
 
@@ -100,9 +108,11 @@ struct SingleHopCallMessage {
  * the send message on to its final destination.
  */
 struct MultiHopSendMessage {
+    address originSenderAddress;
     bytes32 destinationBlockchainID;
     address destinationBridgeAddress;
     address recipient;
+    address secondaryFeeAddress;
     uint256 secondaryFee;
     uint256 secondaryGasLimit;
 }
@@ -125,6 +135,7 @@ struct MultiHopCallMessage {
     uint256 recipientGasLimit;
     address fallbackRecipient;
     uint256 secondaryRequiredGasLimit;
+    address secondaryFeeAddress;
     uint256 secondaryFee;
 }
 
