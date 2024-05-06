@@ -9,6 +9,7 @@ import {TeleporterTokenDestination} from "./TeleporterTokenDestination.sol";
 import {IERC20Bridge} from "./interfaces/IERC20Bridge.sol";
 import {IERC20SendAndCallReceiver} from "./interfaces/IERC20SendAndCallReceiver.sol";
 import {IERC20, ERC20} from "@openzeppelin/contracts@4.8.1/token/ERC20/ERC20.sol";
+import {ERC20Permit} from "@openzeppelin/contracts@4.8.1/token/ERC20/extensions/draft-ERC20Permit.sol";
 import {SafeERC20} from "@openzeppelin/contracts@4.8.1/token/ERC20/utils/SafeERC20.sol";
 import {
     SendTokensInput,
@@ -30,7 +31,7 @@ import {CallUtils} from "./utils/CallUtils.sol";
  *
  * @custom:security-contact https://github.com/ava-labs/teleporter-token-bridge/blob/main/SECURITY.md
  */
-contract ERC20Destination is IERC20Bridge, TeleporterTokenDestination, ERC20 {
+contract ERC20Destination is IERC20Bridge, TeleporterTokenDestination, ERC20, ERC20Permit {
     using SafeERC20 for IERC20;
 
     uint8 private immutable _decimals;
@@ -61,6 +62,7 @@ contract ERC20Destination is IERC20Bridge, TeleporterTokenDestination, ERC20 {
             false
         )
         ERC20(tokenName, tokenSymbol)
+        ERC20Permit(tokenName)
     {
         _decimals = tokenDecimals;
     }
