@@ -119,7 +119,7 @@ abstract contract TeleporterTokenSource is
                 destinationAddress: input.destinationBridgeAddress,
                 feeInfo: TeleporterFeeInfo({feeTokenAddress: input.primaryFeeAddress, amount: input.primaryFee}),
                 requiredGasLimit: input.requiredGasLimit,
-                allowedRelayerAddresses: new address[](0),
+                allowedRelayerAddresses: allowedRelayers,
                 message: abi.encode(message)
             })
         );
@@ -184,7 +184,7 @@ abstract contract TeleporterTokenSource is
                 destinationAddress: input.destinationBridgeAddress,
                 feeInfo: TeleporterFeeInfo({feeTokenAddress: input.primaryFeeAddress, amount: input.primaryFee}),
                 requiredGasLimit: input.requiredGasLimit,
-                allowedRelayerAddresses: new address[](0),
+                allowedRelayerAddresses: allowedRelayers,
                 message: abi.encode(message)
             })
         );

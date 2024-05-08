@@ -224,7 +224,7 @@ abstract contract TeleporterTokenDestination is
                 destinationAddress: tokenSourceAddress,
                 feeInfo: TeleporterFeeInfo({feeTokenAddress: input.primaryFeeAddress, amount: adjustedFee}),
                 requiredGasLimit: messageRequiredGasLimit,
-                allowedRelayerAddresses: new address[](0),
+                allowedRelayerAddresses: allowedRelayers,
                 message: abi.encode(message)
             })
         );
@@ -335,7 +335,7 @@ abstract contract TeleporterTokenDestination is
                 destinationAddress: tokenSourceAddress,
                 feeInfo: TeleporterFeeInfo({feeTokenAddress: input.primaryFeeAddress, amount: adjustedFee}),
                 requiredGasLimit: messageRequiredGasLimit,
-                allowedRelayerAddresses: new address[](0),
+                allowedRelayerAddresses: allowedRelayers,
                 message: abi.encode(message)
             })
         );
